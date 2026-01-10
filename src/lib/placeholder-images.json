@@ -1,3 +1,34 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "bike-1",
+      "description": "A modern e-bike parked on a city street.",
+      "imageUrl": "https://images.unsplash.com/photo-1625090665908-9e61b01aba6c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxlYmlrZSUyMGNpdHl8ZW58MHx8fHwxNzY4MDE0NjE1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "ebike city"
+    },
+    {
+      "id": "bike-2",
+      "description": "Close-up of an e-bike's handlebars and display.",
+      "imageUrl": "https://images.unsplash.com/photo-1763041821541-ecfd706a8564?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxlYmlrZSUyMGhhbmRsZWJhcnxlbnwwfHx8fDE3NjgwMTU1NTJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "ebike handlebar"
+    },
+    {
+      "id": "bike-3",
+      "description": "An e-bike available at a charging station.",
+      "imageUrl": "https://images.unsplash.com/photo-1734687005499-5b7562121f80?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxlYmlrZSUyMHN0YXRpb258ZW58MHx8fHwxNzY4MDE1NTUyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "ebike station"
+    },
+    {
+      "id": "user-avatar-1",
+      "description": "Placeholder avatar for a user.",
+      "imageUrl": "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjgwMDU1OTV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "user-avatar-2",
+      "description": "Placeholder avatar for another user.",
+      "imageUrl": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8d29tYW4lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjgwMDY5NzF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "woman portrait"
+    }
+  ]
 }
