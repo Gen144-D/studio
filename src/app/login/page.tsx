@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,
-  signInWithPopup,
+  signInWithRedirect,
 } from 'firebase/auth';
 import { auth } from '@/firebase/config';
 import { Button } from '@/components/ui/button';
@@ -74,15 +74,14 @@ export default function LoginPage() {
     setLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
-      router.push('/dashboard');
+      await signInWithRedirect(auth, provider);
+      // No need to router.push here, Firebase handles the redirect.
     } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Google Sign-In Failed',
         description: error.message,
       });
-    } finally {
       setLoading(false);
     }
   };
