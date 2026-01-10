@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 export const metadata: Metadata = {
   title: 'DavaoCycle',
   description: 'E-Bike Sharing and Fleet Management',
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({

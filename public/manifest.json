@@ -1,0 +1,21 @@
+{
+  "name": "DavaoCycle",
+  "short_name": "DavaoCycle",
+  "description": "E-Bike Sharing and Fleet Management",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#3A322E",
+  "theme_color": "#D48C45",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
