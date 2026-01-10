@@ -14,59 +14,58 @@ import {
   Wrench,
 } from 'lucide-react';
 import type { NavItem } from '@/lib/types';
-import { cn } from '@/lib/utils';
 import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useSidebar } from '@/components/ui/sidebar';
 
 const navItems: NavItem[] = [
   {
     title: 'Dashboard',
     href: '/dashboard',
-    icon: <LayoutDashboard size={20} />,
+    icon: <LayoutDashboard />,
   },
   {
     title: 'Fleet',
     href: '/dashboard/fleet',
-    icon: <Bike size={20} />,
+    icon: <Bike />,
   },
   {
     title: 'Stations',
     href: '/dashboard/stations',
-    icon: <MapPin size={20} />,
+    icon: <MapPin />,
   },
   {
     title: 'Users',
     href: '/dashboard/users',
-    icon: <Users size={20} />,
+    icon: <Users />,
   },
   {
     title: 'Analytics',
     href: '/dashboard/analytics',
-    icon: <BarChart2 size={20} />,
+    icon: <BarChart2 />,
   },
   {
     title: 'Dynamic Pricing',
     href: '/dashboard/pricing',
-    icon: <DollarSign size={20} />,
+    icon: <DollarSign />,
   },
   {
     title: 'Maintenance',
     href: '/dashboard/maintenance',
-    icon: <Wrench size={20} />,
+    icon: <Wrench />,
   },
   {
     title: 'Settings',
     href: '/dashboard/settings',
-    icon: <Settings size={20} />,
+    icon: <Settings />,
   },
 ];
 
@@ -75,7 +74,7 @@ export function DashboardNav() {
   const { state } = useSidebar();
 
   return (
-    <nav className="flex flex-col gap-2">
+    <nav className="flex flex-col">
       <SidebarMenu>
         {navItems.map((item) => {
           const isActive = pathname === item.href;
@@ -83,9 +82,8 @@ export function DashboardNav() {
             <SidebarMenuItem key={item.title}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Link href={item.href}>
+                  <Link href={item.href} legacyBehavior passHref>
                     <SidebarMenuButton
-                      variant="default"
                       isActive={isActive}
                       className="w-full"
                     >

@@ -17,7 +17,8 @@ import {
   SidebarInset,
 } from '@/components/ui/sidebar';
 import { DashboardNav } from '@/components/dashboard-nav';
-import { Logo, LogOut } from 'lucide-react';
+import { Logo } from '@/components/icons';
+import { LogOut } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,7 +28,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 
 export default function DashboardLayout({
   children,
@@ -56,8 +56,8 @@ export default function DashboardLayout({
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="flex flex-col items-center gap-4">
-            <Logo className="size-12 animate-pulse text-primary" />
-            <p className="text-muted-foreground">Loading your dashboard...</p>
+          <Logo className="size-12 animate-pulse text-primary" />
+          <p className="text-muted-foreground">Loading your dashboard...</p>
         </div>
       </div>
     );
@@ -116,7 +116,7 @@ export default function DashboardLayout({
           </DropdownMenu>
         </SidebarFooter>
       </Sidebar>
-      <SidebarInset className="bg-secondary/40">
+      <SidebarInset>
         <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
           <SidebarTrigger className="md:hidden" />
           {/* Can add Breadcrumbs or Page Title here */}
