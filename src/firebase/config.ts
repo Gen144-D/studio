@@ -1,3 +1,4 @@
+
 // @ts-nocheck
 import { initializeApp, getApp, getApps } from "firebase/app";
 import { getAuth } from "firebase/auth";
@@ -5,12 +6,12 @@ import { getFirestore } from "firebase/firestore";
 
 // The web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "API_KEY",
-  authDomain: "PROJECT_ID.firebaseapp.com",
-  projectId: "PROJECT_ID",
-  storageBucket: "PROJECT_ID.appspot.com",
-  messagingSenderId: "SENDER_ID",
-  appId: "APP_ID",
+  apiKey: "AIzaSyCnjI3Gyv_ArUofZwwDI4LOM5CcU_wlbt4",
+  authDomain: "studio-625719806-57d5a.firebaseapp.com",
+  projectId: "studio-625719806-57d5a",
+  storageBucket: "studio-625719806-57d5a.appspot.com",
+  messagingSenderId: "490252716094",
+  appId: "1:490252716094:web:bd97e6d05eac3c21b2e96f",
 };
 
 // Initialize Firebase
