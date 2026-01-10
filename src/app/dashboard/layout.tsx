@@ -1,6 +1,11 @@
 'use client';
 
-import Image from 'next/image';
+import React, { useEffect } from 'react';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { useRouter } from 'next/navigation';
+import { auth } from '@/firebase/config';
+import { signOut } from 'firebase/auth';
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   SidebarProvider,
@@ -13,7 +18,6 @@ import {
 } from '@/components/ui/sidebar';
 import { DashboardNav } from '@/components/dashboard-nav';
 import { Logo, LogOut } from 'lucide-react';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,27 +27,41 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { auth } from '@/firebase/config';
-import { signOut } from 'firebase/auth';
-import { useRouter } from 'next/navigation';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const userAvatar = PlaceHolderImages.find((img) => img.id === 'user-avatar-1');
+  const [user, loading, error] = useAuthState(auth);
   const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
 
   const handleSignOut = async () => {
     try {
       await signOut(auth);
-      // You can optionally redirect the user to the login page
-      // router.push('/login');
+      router.push('/login');
     } catch (error) {
       console.error('Error signing out: ', error);
     }
   };
+
+  if (loading || !user) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="flex flex-col items-center gap-4">
+            <Logo className="size-12 animate-pulse text-primary" />
+            <p className="text-muted-foreground">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <SidebarProvider>
@@ -67,13 +85,15 @@ export default function DashboardLayout({
                 className="flex items-center justify-start gap-3 p-2 w-full h-auto rounded-lg bg-secondary"
               >
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src={userAvatar?.imageUrl} alt="Admin User" />
-                  <AvatarFallback>AU</AvatarFallback>
+                  {user.photoURL && <AvatarImage src={user.photoURL} alt={user.displayName || 'User'} />}
+                  <AvatarFallback>
+                    {user.displayName ? user.displayName.charAt(0).toUpperCase() : user.email?.charAt(0).toUpperCase()}
+                  </AvatarFallback>
                 </Avatar>
-                <div className="text-left">
-                  <p className="font-semibold text-sm">Admin User</p>
-                  <p className="text-xs text-muted-foreground">
-                    admin@davaocycle.com
+                <div className="text-left truncate">
+                  <p className="font-semibold text-sm truncate">{user.displayName || 'Admin User'}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {user.email}
                   </p>
                 </div>
               </Button>
@@ -81,9 +101,9 @@ export default function DashboardLayout({
             <DropdownMenuContent className="w-56 mb-2" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">Admin</p>
+                  <p className="text-sm font-medium leading-none">{user.displayName || 'Admin'}</p>
                   <p className="text-xs leading-none text-muted-foreground">
-                    admin@example.com
+                    {user.email}
                   </p>
                 </div>
               </DropdownMenuLabel>
@@ -98,8 +118,8 @@ export default function DashboardLayout({
       </Sidebar>
       <SidebarInset className="bg-secondary/40">
         <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-           <SidebarTrigger className="md:hidden" />
-           {/* Can add Breadcrumbs or Page Title here */}
+          <SidebarTrigger className="md:hidden" />
+          {/* Can add Breadcrumbs or Page Title here */}
         </header>
         <main className="flex-1 overflow-auto p-4 sm:px-6 sm:py-0">
           {children}
