@@ -4,43 +4,24 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   createUserWithEmailAndPassword,
-  GoogleAuthProvider,
-  signInWithRedirect,
   updateProfile,
 } from 'firebase/auth';
-import { auth, firestore } from '@/firebase/config';
-import { doc, setDoc, Timestamp } from 'firebase/firestore';
+import { auth } from '@/firebase/config';
 import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
-import Link from 'next/link';
-import { GoogleIcon } from '@/components/icons';
-import type { User } from 'firebase/auth';
+import { Loader2, ShieldCheck } from 'lucide-react';
+import { createUserDocument } from '../signup/page';
 
-// Function to create a user document in Firestore
-const createUserDocument = async (user: User, role: 'admin' | 'user' = 'user') => {
-  const userDocRef = doc(firestore, 'users', user.uid);
-  return setDoc(userDocRef, {
-    uid: user.uid,
-    email: user.email,
-    displayName: user.displayName,
-    role: role,
-    createdAt: Timestamp.now(),
-    photoURL: user.photoURL,
-  });
-};
-
-export default function SignUpPage() {
+export default function SetupFirstAdminPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
@@ -48,12 +29,12 @@ export default function SignUpPage() {
   const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  const handleSetupAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!displayName) {
       toast({
         variant: 'destructive',
-        title: 'Sign Up Failed',
+        title: 'Setup Failed',
         description: 'Please enter your full name.',
       });
       return;
@@ -67,21 +48,25 @@ export default function SignUpPage() {
       );
 
       await updateProfile(userCredential.user, { displayName });
-      // We need to reload the user to get the updated displayName
       await userCredential.user.reload();
       const updatedUser = auth.currentUser;
 
       if (updatedUser) {
-        await createUserDocument(updatedUser, 'user');
+        await createUserDocument(updatedUser, 'admin'); // Create user with 'admin' role
       } else {
         throw new Error("Could not get updated user information.");
       }
+      
+      toast({
+        title: 'Admin Account Created',
+        description: 'You can now log in with your admin credentials.',
+      });
 
-      router.push('/dashboard');
+      router.push('/login');
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Sign Up Failed',
+        title: 'Admin Setup Failed',
         description: error.message,
       });
     } finally {
@@ -89,35 +74,22 @@ export default function SignUpPage() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    setLoading(true);
-    const provider = new GoogleAuthProvider();
-    try {
-      // The logic to create the user doc after redirect is in the /login page effect.
-      await signInWithRedirect(auth, provider);
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Google Sign-In Failed',
-        description: error.message,
-      });
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="flex items-center justify-center min-h-screen bg-secondary/40 p-4">
-      <Card className="w-full max-w-sm rounded-xl shadow-lg">
+      <Card className="w-full max-w-sm rounded-xl shadow-lg border-primary/50">
         <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-headline">
-            Create an Account
+          <div className="mx-auto w-fit bg-primary/20 p-3 rounded-full text-primary">
+            <ShieldCheck className="h-10 w-10" />
+          </div>
+          <CardTitle className="text-3xl font-headline mt-2">
+            Create First Admin
           </CardTitle>
           <CardDescription>
-            Join DavaoCycle to start managing your e-bike fleet.
+            This one-time setup will create the primary administrator account.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSignUp} className="space-y-4">
+          <form onSubmit={handleSetupAdmin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="displayName">Full Name</Label>
               <Input
@@ -155,40 +127,11 @@ export default function SignUpPage() {
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading && <Loader2 className="mr-2 animate-spin" />}
-              Sign Up
+              Create Admin Account
             </Button>
           </form>
-          <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">
-                Or sign up with
-              </span>
-            </div>
-          </div>
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={handleGoogleSignIn}
-            disabled={loading}
-          >
-            <GoogleIcon className="mr-2 h-4 w-4" />
-            Google
-          </Button>
         </CardContent>
-        <CardFooter className="text-center text-sm">
-          <p className="w-full">
-            Already have an account?{' '}
-            <Link href="/login" className="underline text-primary">
-              Sign In
-            </Link>
-          </p>
-        </CardFooter>
       </Card>
     </div>
   );
 }
-
-export { createUserDocument };
