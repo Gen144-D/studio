@@ -6,6 +6,7 @@ import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
   updateProfile,
 } from 'firebase/auth';
 import { auth, firestore } from '@/firebase/config';
@@ -28,7 +29,7 @@ import { GoogleIcon } from '@/components/icons';
 import type { User } from 'firebase/auth';
 
 // Function to create a user document in Firestore
-const createUserDocument = async (user: User) => {
+export const createUserDocument = async (user: User) => {
   const userDocRef = doc(firestore, 'users', user.uid);
   const userDoc = await getDoc(userDocRef);
 
@@ -104,11 +105,19 @@ export default function SignUpPage() {
       await createUserDocument(result.user);
       router.push('/dashboard');
     } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Google Sign-In Failed',
-        description: error.message,
-      });
+       if (error.code === 'auth/popup-blocked') {
+        toast({
+          title: 'Pop-up Blocked',
+          description: 'Redirecting to Google to complete sign-up...',
+        });
+        await signInWithRedirect(auth, provider);
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Google Sign-In Failed',
+          description: error.message,
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -152,8 +161,7 @@ export default function SignUpPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
+              <Label htmlFor="password">Password</Label>              <Input
                 id="password"
                 type="password"
                 required
@@ -199,5 +207,3 @@ export default function SignUpPage() {
     </div>
   );
 }
-
-export { createUserDocument };

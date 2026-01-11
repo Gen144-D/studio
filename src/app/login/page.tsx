@@ -7,6 +7,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   getRedirectResult,
+  signInWithRedirect,
 } from 'firebase/auth';
 import { auth, firestore } from '@/firebase/config';
 import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
@@ -36,8 +37,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-  // This effect handles the redirect result from Google sign-in, just in case.
-  // But the primary method will be popup.
   useEffect(() => {
     const checkRedirect = async () => {
       try {
@@ -100,11 +99,19 @@ export default function LoginPage() {
       const result = await signInWithPopup(auth, provider);
       await handleSocialSignIn(result.user);
     } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Google Sign-In Failed',
-        description: error.message,
-      });
+      if (error.code === 'auth/popup-blocked') {
+        toast({
+          title: 'Pop-up Blocked',
+          description: 'Redirecting to Google to complete sign-in...',
+        });
+        await signInWithRedirect(auth, provider);
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Google Sign-In Failed',
+          description: error.message,
+        });
+      }
     } finally {
       setLoading(false);
     }
