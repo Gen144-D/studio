@@ -48,6 +48,8 @@ export default function SetupFirstAdminPage() {
       );
 
       await updateProfile(userCredential.user, { displayName });
+      
+      // We need to reload the user to get the updated displayName
       await userCredential.user.reload();
       const updatedUser = auth.currentUser;
 

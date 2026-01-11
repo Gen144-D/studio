@@ -30,14 +30,15 @@ import type { User } from 'firebase/auth';
 // Function to create a user document in Firestore
 const createUserDocument = async (user: User, role: 'admin' | 'user' = 'user') => {
   const userDocRef = doc(firestore, 'users', user.uid);
-  return setDoc(userDocRef, {
+  const userProfile = {
     uid: user.uid,
     email: user.email,
     displayName: user.displayName,
     role: role,
     createdAt: Timestamp.now(),
     photoURL: user.photoURL,
-  });
+  };
+  return setDoc(userDocRef, userProfile);
 };
 
 export default function SignUpPage() {
@@ -67,17 +68,18 @@ export default function SignUpPage() {
       );
 
       await updateProfile(userCredential.user, { displayName });
+      
       // We need to reload the user to get the updated displayName
       await userCredential.user.reload();
       const updatedUser = auth.currentUser;
 
       if (updatedUser) {
         await createUserDocument(updatedUser, 'user');
+        router.push('/dashboard');
       } else {
         throw new Error("Could not get updated user information.");
       }
 
-      router.push('/dashboard');
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -113,7 +115,7 @@ export default function SignUpPage() {
             Create an Account
           </CardTitle>
           <CardDescription>
-            Join DavaoCycle to start managing your e-bike fleet.
+            Join DavaoCycle to start your journey.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -135,7 +137,7 @@ export default function SignUpPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@davaocycle.com"
+                placeholder="juan@email.com"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
