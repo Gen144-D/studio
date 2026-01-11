@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   createUserWithEmailAndPassword,
+  getRedirectResult,
   GoogleAuthProvider,
   signInWithPopup,
   signInWithRedirect,
@@ -54,6 +55,29 @@ export default function SignUpPage() {
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+   useEffect(() => {
+    const checkRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result && result.user) {
+          await createUserDocument(result.user);
+          router.push('/dashboard');
+        }
+      } catch (error: any) {
+        toast({
+          variant: 'destructive',
+          title: 'Google Sign-In Failed',
+          description: error.message,
+        });
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+    checkRedirect();
+  }, [router, toast]);
+
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,11 +111,19 @@ export default function SignUpPage() {
       }
 
     } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Sign Up Failed',
-        description: error.message,
-      });
+      if (error.code === 'auth/email-already-in-use') {
+         toast({
+          variant: 'destructive',
+          title: 'Email Already In Use',
+          description: 'This email is already registered. Please sign in.',
+        });
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Sign Up Failed',
+          description: error.message,
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -122,6 +154,17 @@ export default function SignUpPage() {
       setLoading(false);
     }
   };
+
+  if (isCheckingAuth) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="size-12 animate-spin text-primary" />
+          <p className="text-muted-foreground">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-secondary/40 p-4">
