@@ -27,6 +27,7 @@ import { Fingerprint, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { GoogleIcon, Logo } from '@/components/icons';
 import type { User } from 'firebase/auth';
+import type { UserProfile } from '@/lib/types';
 
 
 export default function LoginPage() {
@@ -37,12 +38,21 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
+  const handleSuccessfulLogin = (role: 'admin' | 'user') => {
+    if (role === 'admin') {
+      router.push('/dashboard');
+    } else {
+      router.push('/home');
+    }
+  };
+
   useEffect(() => {
     const checkRedirect = async () => {
       try {
         const result = await getRedirectResult(auth);
         if (result && result.user) {
-          await handleSocialSignIn(result.user);
+          const profile = await handleSocialSignIn(result.user);
+          handleSuccessfulLogin(profile.role);
         }
       } catch (error: any) {
         toast({
@@ -57,30 +67,42 @@ export default function LoginPage() {
     checkRedirect();
   }, [router, toast]);
 
-  const handleSocialSignIn = async (user: User) => {
+  const handleSocialSignIn = async (user: User): Promise<UserProfile> => {
     const userDocRef = doc(firestore, 'users', user.uid);
     const userDoc = await getDoc(userDocRef);
 
     if (!userDoc.exists()) {
-      // New user via Google, create their document
-      await setDoc(userDocRef, {
+      const newUserProfile: UserProfile = {
         uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
+        email: user.email!,
+        displayName: user.displayName!,
         role: 'user', // Default role
         createdAt: Timestamp.now(),
-        photoURL: user.photoURL,
-      });
+        photoURL: user.photoURL || '',
+      };
+      await setDoc(userDocRef, newUserProfile);
+      return newUserProfile;
     }
-    router.push('/dashboard');
+    return userDoc.data() as UserProfile;
   };
-
+  
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.push('/dashboard');
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userDocRef = doc(firestore, 'users', userCredential.user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (userDoc.exists()) {
+        const profile = userDoc.data() as UserProfile;
+        handleSuccessfulLogin(profile.role);
+      } else {
+        // This is an edge case, user exists in Auth but not Firestore. Treat as a user.
+        await setDoc(userDocRef, { role: 'user' }, { merge: true });
+        handleSuccessfulLogin('user');
+      }
+
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -97,9 +119,10 @@ export default function LoginPage() {
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
-      await handleSocialSignIn(result.user);
+      const profile = await handleSocialSignIn(result.user);
+      handleSuccessfulLogin(profile.role);
     } catch (error: any) {
-      if (error.code === 'auth/popup-blocked') {
+      if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request') {
         toast({
           title: 'Pop-up Blocked',
           description: 'Redirecting to Google to complete sign-in...',
@@ -111,10 +134,10 @@ export default function LoginPage() {
           title: 'Google Sign-In Failed',
           description: error.message,
         });
+        setLoading(false);
       }
-    } finally {
-      setLoading(false);
-    }
+    } 
+    // Don't setLoading(false) here because of redirect possibility
   };
 
   const handlePasskeySignIn = () => {
@@ -136,9 +159,10 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-secondary/40 p-4">
+    <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-background p-4">
       <Card className="w-full max-w-sm rounded-xl shadow-lg">
-        <CardHeader className="text-center">
+        <CardHeader className="text-center space-y-4">
+          <Logo className="mx-auto h-12 w-12 text-primary" />
           <CardTitle className="text-3xl font-headline">Welcome Back</CardTitle>
           <CardDescription>
             Sign in to access the DavaoCycle dashboard.

@@ -57,11 +57,11 @@ export default function DashboardLayout({
         if (profile.role === 'admin') {
           setAuthChecked(true);
         } else {
-          router.push('/home');
+          router.push('/unauthorized'); // Redirect non-admins away
         }
       } else {
         // User exists in Auth, but not in Firestore. Likely a new user.
-        // Redirect to a user-facing page.
+        // This is a failsafe; they shouldn't be here.
         router.push('/home');
       }
     };
@@ -78,12 +78,12 @@ export default function DashboardLayout({
     }
   };
 
-  if (loading || !authChecked || !user) {
+  if (loading || !authChecked || !user || !userProfile) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-900">
         <div className="flex flex-col items-center gap-4">
           <Logo className="size-12 animate-pulse text-primary" />
-          <p className="text-muted-foreground">Verifying credentials...</p>
+          <p className="text-muted-foreground">Verifying admin credentials...</p>
         </div>
       </div>
     );
@@ -95,10 +95,11 @@ export default function DashboardLayout({
         <SidebarHeader>
           <div className="flex items-center gap-2">
             <Logo className="size-8 text-primary" />
-            <h1 className="text-xl font-bold font-headline text-foreground">
+            <h1 className="text-xl font-bold font-headline text-sidebar-foreground">
               DavaoCycle
             </h1>
           </div>
+           <p className="text-xs text-sidebar-foreground/70 pl-1">Admin Panel</p>
         </SidebarHeader>
         <SidebarContent>
           <DashboardNav />
@@ -108,7 +109,7 @@ export default function DashboardLayout({
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="flex items-center justify-start gap-3 p-2 w-full h-auto rounded-lg bg-secondary"
+                className="flex items-center justify-start gap-3 p-2 w-full h-auto rounded-lg bg-sidebar-accent"
               >
                 <Avatar className="h-10 w-10">
                   {user.photoURL && <AvatarImage src={user.photoURL} alt={user.displayName || 'User'} />}
@@ -117,7 +118,7 @@ export default function DashboardLayout({
                   </AvatarFallback>
                 </Avatar>
                 <div className="text-left truncate">
-                  <p className="font-semibold text-sm truncate">{user.displayName || 'Admin User'}</p>
+                  <p className="font-semibold text-sm truncate text-sidebar-accent-foreground">{user.displayName || 'Admin User'}</p>
                   <p className="text-xs text-muted-foreground truncate">
                     {user.email}
                   </p>

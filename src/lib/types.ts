@@ -33,5 +33,5 @@ export type UserProfile = {
   displayName: string;
   role: 'admin' | 'user';
   createdAt: Timestamp;
-  photoURL?: string;
+  photoURL?: string | null;
 };

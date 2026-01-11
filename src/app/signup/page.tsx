@@ -26,26 +26,29 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { GoogleIcon } from '@/components/icons';
+import { GoogleIcon, Logo } from '@/components/icons';
 import type { User } from 'firebase/auth';
+import type { UserProfile } from '@/lib/types';
 
 // Function to create a user document in Firestore
-export const createUserDocument = async (user: User) => {
+export const createUserDocument = async (user: User): Promise<UserProfile> => {
   const userDocRef = doc(firestore, 'users', user.uid);
   const userDoc = await getDoc(userDocRef);
 
   // Only create document if it doesn't exist
   if (!userDoc.exists()) {
-    const userProfile = {
+    const userProfile: UserProfile = {
       uid: user.uid,
-      email: user.email,
-      displayName: user.displayName,
+      email: user.email!,
+      displayName: user.displayName!,
       role: 'user', // Always default to 'user' on signup
       createdAt: Timestamp.now(),
-      photoURL: user.photoURL,
+      photoURL: user.photoURL || '',
     };
     await setDoc(userDocRef, userProfile);
+    return userProfile;
   }
+  return userDoc.data() as UserProfile;
 };
 
 export default function SignUpPage() {
@@ -63,7 +66,7 @@ export default function SignUpPage() {
         const result = await getRedirectResult(auth);
         if (result && result.user) {
           await createUserDocument(result.user);
-          router.push('/dashboard');
+          router.push('/home');
         }
       } catch (error: any) {
         toast({
@@ -105,7 +108,7 @@ export default function SignUpPage() {
 
       if (updatedUser) {
         await createUserDocument(updatedUser);
-        router.push('/dashboard');
+        router.push('/home'); // Redirect to user home page
       } else {
         throw new Error("Could not get updated user information.");
       }
@@ -135,9 +138,9 @@ export default function SignUpPage() {
     try {
       const result = await signInWithPopup(auth, provider);
       await createUserDocument(result.user);
-      router.push('/dashboard');
+      router.push('/home'); // Redirect to user home page
     } catch (error: any) {
-       if (error.code === 'auth/popup-blocked') {
+       if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request') {
         toast({
           title: 'Pop-up Blocked',
           description: 'Redirecting to Google to complete sign-up...',
@@ -149,15 +152,15 @@ export default function SignUpPage() {
           title: 'Google Sign-In Failed',
           description: error.message,
         });
+        setLoading(false);
       }
-    } finally {
-      setLoading(false);
     }
+    // Don't setLoading(false) here because of redirect possibility
   };
 
   if (isCheckingAuth) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-background">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="size-12 animate-spin text-primary" />
           <p className="text-muted-foreground">Checking authentication...</p>
@@ -167,9 +170,10 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-secondary/40 p-4">
+    <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-background p-4">
       <Card className="w-full max-w-sm rounded-xl shadow-lg">
-        <CardHeader className="text-center">
+        <CardHeader className="text-center space-y-4">
+           <Logo className="mx-auto h-12 w-12 text-primary" />
           <CardTitle className="text-3xl font-headline">
             Create an Account
           </CardTitle>
