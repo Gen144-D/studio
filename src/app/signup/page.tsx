@@ -36,15 +36,15 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false);
 
   // Function to create a user document in Firestore
-  const createUserDocument = async (user: User, customDisplayName?: string) => {
+  const createUserDocument = async (user: User) => {
     const userDocRef = doc(firestore, 'users', user.uid);
     await setDoc(userDocRef, {
       uid: user.uid,
       email: user.email,
-      displayName: customDisplayName || user.displayName || 'Anonymous',
+      displayName: user.displayName, // This will now have the correct displayName
       role: 'user', // Default role
       createdAt: Timestamp.now(),
-      photoURL: user.photoURL || null,
+      photoURL: user.photoURL,
     });
   };
 
@@ -65,10 +65,10 @@ export default function SignUpPage() {
         email,
         password
       );
-      await updateProfile(userCredential.user, { displayName });
 
-      // Create user document in Firestore
-      await createUserDocument(userCredential.user, displayName);
+      // IMPORTANT: Update profile first, then create the document
+      await updateProfile(userCredential.user, { displayName });
+      await createUserDocument(userCredential.user);
 
       router.push('/dashboard');
     } catch (error: any) {
@@ -86,7 +86,6 @@ export default function SignUpPage() {
     setLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      // We don't handle the result here because the redirect flow takes over.
       // The logic to create the user doc after redirect is in the /login page effect.
       await signInWithRedirect(auth, provider);
     } catch (error: any) {
