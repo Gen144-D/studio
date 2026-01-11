@@ -9,7 +9,7 @@ import {
   updateProfile,
 } from 'firebase/auth';
 import { auth, firestore } from '@/firebase/config';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, Timestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -25,6 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { GoogleIcon } from '@/components/icons';
+import type { User } from 'firebase/auth';
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -35,23 +36,28 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false);
 
   // Function to create a user document in Firestore
-  const createUserDocument = async (user: {
-    uid: string;
-    email: string | null;
-    displayName: string | null;
-  }) => {
+  const createUserDocument = async (user: User, customDisplayName?: string) => {
     const userDocRef = doc(firestore, 'users', user.uid);
     await setDoc(userDocRef, {
       uid: user.uid,
       email: user.email,
-      displayName: user.displayName,
+      displayName: customDisplayName || user.displayName,
       role: 'user', // Default role
-      createdAt: new Date(),
+      createdAt: Timestamp.now(),
+      photoURL: user.photoURL || null,
     });
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!displayName) {
+      toast({
+        variant: 'destructive',
+        title: 'Sign Up Failed',
+        description: 'Please enter your full name.',
+      });
+      return;
+    }
     setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(
@@ -60,13 +66,9 @@ export default function SignUpPage() {
         password
       );
       await updateProfile(userCredential.user, { displayName });
-      
+
       // Create user document in Firestore
-      await createUserDocument({
-        uid: userCredential.user.uid,
-        email: userCredential.user.email,
-        displayName,
-      });
+      await createUserDocument(userCredential.user, displayName);
 
       router.push('/dashboard');
     } catch (error: any) {

@@ -9,7 +9,7 @@ import {
   getRedirectResult,
 } from 'firebase/auth';
 import { auth, firestore } from '@/firebase/config';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -24,8 +24,9 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Fingerprint, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { GoogleIcon } from '@/components/icons';
-import { Logo } from '@/components/icons';
+import { GoogleIcon, Logo } from '@/components/icons';
+import type { User } from 'firebase/auth';
+
 
 export default function LoginPage() {
   const router = useRouter();
@@ -51,7 +52,7 @@ export default function LoginPage() {
               email: result.user.email,
               displayName: result.user.displayName,
               role: 'user', // Default role
-              createdAt: new Date(),
+              createdAt: Timestamp.now(),
               photoURL: result.user.photoURL,
             });
           }
@@ -113,7 +114,7 @@ export default function LoginPage() {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="flex flex-col items-center gap-4">
-          <Logo className="size-12 animate-spin text-primary" />
+          <Logo className="size-12 animate-pulse text-primary" />
           <p className="text-muted-foreground">Checking authentication...</p>
         </div>
       </div>
