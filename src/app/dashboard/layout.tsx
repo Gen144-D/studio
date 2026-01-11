@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useRouter } from 'next/navigation';
-import { auth } from '@/firebase/config';
+import { auth, firestore } from '@/firebase/config';
 import { signOut } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -28,6 +29,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
+import type { UserProfile } from '@/lib/types';
 
 export default function DashboardLayout({
   children,
@@ -36,11 +38,28 @@ export default function DashboardLayout({
 }) {
   const [user, loading, error] = useAuthState(auth);
   const router = useRouter();
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (loading) return;
+    if (!user) {
       router.push('/login');
+      return;
     }
+
+    const checkUserRole = async () => {
+      const userDoc = await getDoc(doc(firestore, 'users', user.uid));
+      if (userDoc.exists() && userDoc.data().role === 'admin') {
+        setUserProfile(userDoc.data() as UserProfile);
+      } else {
+        // Not an admin, redirect to a non-admin page or show an error
+        router.push('/unauthorized');
+      }
+      setAuthChecked(true);
+    };
+
+    checkUserRole();
   }, [user, loading, router]);
 
   const handleSignOut = async () => {
@@ -52,12 +71,12 @@ export default function DashboardLayout({
     }
   };
 
-  if (loading || !user) {
+  if (loading || !authChecked || !userProfile) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="flex flex-col items-center gap-4">
           <Logo className="size-12 animate-pulse text-primary" />
-          <p className="text-muted-foreground">Loading your dashboard...</p>
+          <p className="text-muted-foreground">Verifying credentials...</p>
         </div>
       </div>
     );

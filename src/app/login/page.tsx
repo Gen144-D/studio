@@ -1,13 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithRedirect,
+  getRedirectResult,
 } from 'firebase/auth';
-import { auth } from '@/firebase/config';
+import { auth, firestore } from '@/firebase/config';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -23,6 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Fingerprint, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { GoogleIcon } from '@/components/icons';
+import { Logo } from '@/components/icons';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -30,6 +33,42 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isCheckingRedirect, setIsCheckingRedirect] = useState(true);
+
+  useEffect(() => {
+    const checkRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result && result.user) {
+          // User signed in via redirect. Check if they exist in Firestore.
+          const userDocRef = doc(firestore, 'users', result.user.uid);
+          const userDoc = await getDoc(userDocRef);
+
+          if (!userDoc.exists()) {
+            // New user via Google, create their document
+            await setDoc(userDocRef, {
+              uid: result.user.uid,
+              email: result.user.email,
+              displayName: result.user.displayName,
+              role: 'user', // Default role
+              createdAt: new Date(),
+              photoURL: result.user.photoURL,
+            });
+          }
+          router.push('/dashboard');
+        }
+      } catch (error: any) {
+        toast({
+          variant: 'destructive',
+          title: 'Google Sign-In Failed',
+          description: error.message,
+        });
+      } finally {
+        setIsCheckingRedirect(false);
+      }
+    };
+    checkRedirect();
+  }, [router, toast]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +92,6 @@ export default function LoginPage() {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithRedirect(auth, provider);
-      // Firebase handles the redirect, so no router.push is needed here.
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -70,6 +108,17 @@ export default function LoginPage() {
       description: 'Passkey authentication is not yet available.',
     });
   };
+
+  if (isCheckingRedirect) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="flex flex-col items-center gap-4">
+          <Logo className="size-12 animate-spin text-primary" />
+          <p className="text-muted-foreground">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-secondary/40 p-4">

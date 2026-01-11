@@ -1,3 +1,5 @@
+import { Timestamp } from "firebase/firestore";
+
 export type NavItem = {
   title: string;
   href: string;
@@ -23,4 +25,13 @@ export type ActiveRental = {
   startTime: Date;
   currentAmount: number;
   paymentStatus: 'Paid' | 'Pending' | 'Failed';
+};
+
+export type UserProfile = {
+  uid: string;
+  email: string;
+  displayName: string;
+  role: 'admin' | 'user';
+  createdAt: Timestamp;
+  photoURL?: string;
 };

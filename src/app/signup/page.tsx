@@ -6,8 +6,10 @@ import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithRedirect,
+  updateProfile,
 } from 'firebase/auth';
-import { auth } from '@/firebase/config';
+import { auth, firestore } from '@/firebase/config';
+import { doc, setDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -29,13 +31,43 @@ export default function SignUpPage() {
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Function to create a user document in Firestore
+  const createUserDocument = async (user: {
+    uid: string;
+    email: string | null;
+    displayName: string | null;
+  }) => {
+    const userDocRef = doc(firestore, 'users', user.uid);
+    await setDoc(userDocRef, {
+      uid: user.uid,
+      email: user.email,
+      displayName: user.displayName,
+      role: 'user', // Default role
+      createdAt: new Date(),
+    });
+  };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      await updateProfile(userCredential.user, { displayName });
+      
+      // Create user document in Firestore
+      await createUserDocument({
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+        displayName,
+      });
+
       router.push('/dashboard');
     } catch (error: any) {
       toast({
@@ -52,8 +84,9 @@ export default function SignUpPage() {
     setLoading(true);
     const provider = new GoogleAuthProvider();
     try {
+      // We don't handle the result here because the redirect flow takes over.
+      // The logic to create the user doc after redirect is in the /login page effect.
       await signInWithRedirect(auth, provider);
-      // Firebase handles the redirect, so no router.push is needed here.
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -77,6 +110,18 @@ export default function SignUpPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignUp} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="displayName">Full Name</Label>
+              <Input
+                id="displayName"
+                type="text"
+                placeholder="Juan Dela Cruz"
+                required
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                disabled={loading}
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
