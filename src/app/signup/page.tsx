@@ -41,7 +41,7 @@ export default function SignUpPage() {
     await setDoc(userDocRef, {
       uid: user.uid,
       email: user.email,
-      displayName: customDisplayName || user.displayName,
+      displayName: customDisplayName || user.displayName || 'Anonymous',
       role: 'user', // Default role
       createdAt: Timestamp.now(),
       photoURL: user.photoURL || null,

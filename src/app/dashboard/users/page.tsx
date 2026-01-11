@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
-import { firestore } from '@/firebase/config';
+import { collection, getDocs, doc, updateDoc, query, where } from 'firebase/firestore';
+import { firestore, auth } from '@/firebase/config';
+import { useAuthState } from 'react-firebase-hooks/auth';
 import {
   Card,
   CardContent,
@@ -35,6 +36,7 @@ import { cn } from '@/lib/utils';
 export default function UsersPage() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentUser] = useAuthState(auth);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -44,7 +46,7 @@ export default function UsersPage() {
         const usersCollection = collection(firestore, 'users');
         const userSnapshot = await getDocs(usersCollection);
         const userList = userSnapshot.docs.map(
-          (doc) => doc.data() as UserProfile
+          (doc) => ({ ...doc.data(), uid: doc.id }) as UserProfile
         );
         setUsers(userList);
       } catch (error) {
@@ -63,6 +65,15 @@ export default function UsersPage() {
   }, [toast]);
 
   const handleRoleChange = async (uid: string, newRole: 'admin' | 'user') => {
+    if (uid === currentUser?.uid) {
+      toast({
+        title: 'Action Forbidden',
+        description: "You cannot change your own role.",
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     try {
       const userDocRef = doc(firestore, 'users', uid);
       await updateDoc(userDocRef, { role: newRole });
@@ -119,11 +130,11 @@ export default function UsersPage() {
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9">
-                        {user.photoURL && <AvatarImage src={user.photoURL} />}
+                        {user.photoURL && <AvatarImage src={user.photoURL} alt={user.displayName} />}
                         <AvatarFallback>
                           {user.displayName
-                            ? user.displayName.charAt(0)
-                            : user.email.charAt(0)}
+                            ? user.displayName.charAt(0).toUpperCase()
+                            : user.email.charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div className="font-medium">{user.displayName || 'N/A'}</div>
@@ -136,6 +147,7 @@ export default function UsersPage() {
                       onValueChange={(value: 'admin' | 'user') =>
                         handleRoleChange(user.uid, value)
                       }
+                      disabled={user.uid === currentUser?.uid}
                     >
                       <SelectTrigger className="w-[120px]">
                         <SelectValue asChild>
