@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,10 @@ export default function UnauthorizedPage() {
     await signOut(auth);
     router.push('/login');
   };
+
+  const goToHome = () => {
+    router.push('/home');
+  }
   
   return (
     <div className="flex items-center justify-center min-h-screen bg-secondary/40 p-4">
@@ -27,9 +32,12 @@ export default function UnauthorizedPage() {
             You do not have permission to view this page. This area is restricted to administrators only.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-2">
+           <Button onClick={goToHome} variant="outline" className="w-full">
+            Go to My Dashboard
+          </Button>
           <Button onClick={handleSignOut} className="w-full">
-            Return to Login
+            Sign Out
           </Button>
         </CardContent>
       </Card>

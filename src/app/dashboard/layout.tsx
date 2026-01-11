@@ -51,13 +51,19 @@ export default function DashboardLayout({
 
     const checkUserRole = async () => {
       const userDoc = await getDoc(doc(firestore, 'users', user.uid));
-      if (userDoc.exists() && userDoc.data().role === 'admin') {
-        setUserProfile(userDoc.data() as UserProfile);
+      if (userDoc.exists()) {
+        const profile = userDoc.data() as UserProfile;
+        setUserProfile(profile);
+        if (profile.role === 'admin') {
+          setAuthChecked(true);
+        } else {
+          router.push('/home');
+        }
       } else {
-        // Not an admin, redirect to a non-admin page or show an error
-        router.push('/unauthorized');
+        // User exists in Auth, but not in Firestore. Likely a new user.
+        // Redirect to a user-facing page.
+        router.push('/home');
       }
-      setAuthChecked(true);
     };
 
     checkUserRole();
