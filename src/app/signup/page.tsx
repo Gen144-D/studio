@@ -5,11 +5,11 @@ import { useRouter } from 'next/navigation';
 import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
-  signInWithRedirect,
+  signInWithPopup,
   updateProfile,
 } from 'firebase/auth';
 import { auth, firestore } from '@/firebase/config';
-import { doc, setDoc, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -28,17 +28,22 @@ import { GoogleIcon } from '@/components/icons';
 import type { User } from 'firebase/auth';
 
 // Function to create a user document in Firestore
-const createUserDocument = async (user: User, role: 'admin' | 'user' = 'user') => {
+const createUserDocument = async (user: User) => {
   const userDocRef = doc(firestore, 'users', user.uid);
-  const userProfile = {
-    uid: user.uid,
-    email: user.email,
-    displayName: user.displayName,
-    role: role,
-    createdAt: Timestamp.now(),
-    photoURL: user.photoURL,
-  };
-  return setDoc(userDocRef, userProfile);
+  const userDoc = await getDoc(userDocRef);
+
+  // Only create document if it doesn't exist
+  if (!userDoc.exists()) {
+    const userProfile = {
+      uid: user.uid,
+      email: user.email,
+      displayName: user.displayName,
+      role: 'user', // Always default to 'user' on signup
+      createdAt: Timestamp.now(),
+      photoURL: user.photoURL,
+    };
+    await setDoc(userDocRef, userProfile);
+  }
 };
 
 export default function SignUpPage() {
@@ -74,7 +79,7 @@ export default function SignUpPage() {
       const updatedUser = auth.currentUser;
 
       if (updatedUser) {
-        await createUserDocument(updatedUser, 'user');
+        await createUserDocument(updatedUser);
         router.push('/dashboard');
       } else {
         throw new Error("Could not get updated user information.");
@@ -95,14 +100,16 @@ export default function SignUpPage() {
     setLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      // The logic to create the user doc after redirect is in the /login page effect.
-      await signInWithRedirect(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      await createUserDocument(result.user);
+      router.push('/dashboard');
     } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Google Sign-In Failed',
         description: error.message,
       });
+    } finally {
       setLoading(false);
     }
   };

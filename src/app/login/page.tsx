@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,
-  signInWithRedirect,
+  signInWithPopup,
   getRedirectResult,
 } from 'firebase/auth';
 import { auth, firestore } from '@/firebase/config';
@@ -34,29 +34,16 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isCheckingRedirect, setIsCheckingRedirect] = useState(true);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
+  // This effect handles the redirect result from Google sign-in, just in case.
+  // But the primary method will be popup.
   useEffect(() => {
     const checkRedirect = async () => {
       try {
         const result = await getRedirectResult(auth);
         if (result && result.user) {
-          // User signed in via redirect. Check if they exist in Firestore.
-          const userDocRef = doc(firestore, 'users', result.user.uid);
-          const userDoc = await getDoc(userDocRef);
-
-          if (!userDoc.exists()) {
-            // New user via Google, create their document
-            await setDoc(userDocRef, {
-              uid: result.user.uid,
-              email: result.user.email,
-              displayName: result.user.displayName,
-              role: 'user', // Default role
-              createdAt: Timestamp.now(),
-              photoURL: result.user.photoURL,
-            });
-          }
-          router.push('/dashboard');
+          await handleSocialSignIn(result.user);
         }
       } catch (error: any) {
         toast({
@@ -65,11 +52,29 @@ export default function LoginPage() {
           description: error.message,
         });
       } finally {
-        setIsCheckingRedirect(false);
+        setIsCheckingAuth(false);
       }
     };
     checkRedirect();
   }, [router, toast]);
+
+  const handleSocialSignIn = async (user: User) => {
+    const userDocRef = doc(firestore, 'users', user.uid);
+    const userDoc = await getDoc(userDocRef);
+
+    if (!userDoc.exists()) {
+      // New user via Google, create their document
+      await setDoc(userDocRef, {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        role: 'user', // Default role
+        createdAt: Timestamp.now(),
+        photoURL: user.photoURL,
+      });
+    }
+    router.push('/dashboard');
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,13 +97,15 @@ export default function LoginPage() {
     setLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithRedirect(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      await handleSocialSignIn(result.user);
     } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Google Sign-In Failed',
         description: error.message,
       });
+    } finally {
       setLoading(false);
     }
   };
@@ -110,7 +117,7 @@ export default function LoginPage() {
     });
   };
 
-  if (isCheckingRedirect) {
+  if (isCheckingAuth) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="flex flex-col items-center gap-4">
