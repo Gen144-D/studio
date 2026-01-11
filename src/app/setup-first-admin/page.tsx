@@ -4,9 +4,11 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
   updateProfile,
 } from 'firebase/auth';
-import { auth } from '@/firebase/config';
+import { auth, firestore } from '@/firebase/config';
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -20,6 +22,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, ShieldCheck } from 'lucide-react';
 import { createUserDocument } from '../signup/page';
+import type { User } from 'firebase/auth';
 
 export default function SetupFirstAdminPage() {
   const router = useRouter();
@@ -40,31 +43,59 @@ export default function SetupFirstAdminPage() {
       return;
     }
     setLoading(true);
-    try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
 
-      await updateProfile(userCredential.user, { displayName });
+    try {
+      let userCredential;
+      try {
+        // First, try to sign in. This handles the case where auth user exists but doc doesn't.
+        userCredential = await signInWithEmailAndPassword(auth, email, password);
+        
+        // If display name is different, update it
+        if (userCredential.user.displayName !== displayName) {
+          await updateProfile(userCredential.user, { displayName });
+          await userCredential.user.reload();
+        }
+
+      } catch (error: any) {
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+          // If user doesn't exist, create a new one
+          userCredential = await createUserWithEmailAndPassword(
+            auth,
+            email,
+            password
+          );
+          await updateProfile(userCredential.user, { displayName });
+          await userCredential.user.reload();
+        } else {
+          // For other errors (like wrong password), re-throw
+          throw error;
+        }
+      }
       
-      // We need to reload the user to get the updated displayName
-      await userCredential.user.reload();
-      const updatedUser = auth.currentUser;
+      const updatedUser = userCredential.user;
 
       if (updatedUser) {
-        await createUserDocument(updatedUser, 'admin'); // Create user with 'admin' role
+        // Create or overwrite user document with admin role
+        const userDocRef = doc(firestore, 'users', updatedUser.uid);
+        await setDoc(userDocRef, {
+            uid: updatedUser.uid,
+            email: updatedUser.email,
+            displayName: updatedUser.displayName,
+            role: 'admin',
+            photoURL: updatedUser.photoURL,
+            createdAt: new Date().toISOString(),
+        }, { merge: true }); // Use merge to be safe
       } else {
         throw new Error("Could not get updated user information.");
       }
       
       toast({
-        title: 'Admin Account Created',
+        title: 'Admin Account Configured',
         description: 'You can now log in with your admin credentials.',
       });
 
       router.push('/login');
+
     } catch (error: any) {
       toast({
         variant: 'destructive',
