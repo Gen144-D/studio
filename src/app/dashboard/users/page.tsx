@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -119,9 +120,9 @@ export default function UsersPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>User</TableHead>
-                <TableHead>Email</TableHead>
+                <TableHead className="hidden sm:table-cell">Email</TableHead>
                 <TableHead>Role</TableHead>
-                <TableHead>Joined</TableHead>
+                <TableHead className="hidden md:table-cell">Joined</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -137,10 +138,10 @@ export default function UsersPage() {
                             : user.email.charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="font-medium">{user.displayName || 'N/A'}</div>
+                      <div className="font-medium truncate sm:w-32">{user.displayName || 'N/A'}</div>
                     </div>
                   </TableCell>
-                  <TableCell>{user.email}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{user.email}</TableCell>
                   <TableCell>
                     <Select
                       defaultValue={user.role}
@@ -165,7 +166,7 @@ export default function UsersPage() {
                       </SelectContent>
                     </Select>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                     {user.createdAt?.toDate
                       ? user.createdAt.toDate().toLocaleDateString()
                       : 'N/A'}

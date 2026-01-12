@@ -1,3 +1,4 @@
+
 import { Bike, PlusCircle } from 'lucide-react';
 import {
   Card,
@@ -68,9 +69,9 @@ export default function FleetPage() {
               </TableHead>
               <TableHead>Bike ID</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Battery</TableHead>
-              <TableHead>Station</TableHead>
-              <TableHead>Last Service</TableHead>
+              <TableHead className="hidden sm:table-cell">Battery</TableHead>
+              <TableHead className="hidden md:table-cell">Station</TableHead>
+              <TableHead className="hidden lg:table-cell">Last Service</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -97,7 +98,7 @@ export default function FleetPage() {
                     {bike.status.replace('-', ' ')}
                   </Badge>
                 </TableCell>
-                <TableCell>
+                <TableCell className="hidden sm:table-cell">
                   <div className="flex items-center gap-2">
                     <div
                       className={cn('w-2 h-2 rounded-full', {
@@ -110,8 +111,8 @@ export default function FleetPage() {
                     <span className="font-code">{bike.battery}%</span>
                   </div>
                 </TableCell>
-                <TableCell>{bike.station}</TableCell>
-                <TableCell className="font-code">{bike.lastService}</TableCell>
+                <TableCell className="hidden md:table-cell">{bike.station}</TableCell>
+                <TableCell className="hidden lg:table-cell font-code">{bike.lastService}</TableCell>
               </TableRow>
             ))}
           </TableBody>
