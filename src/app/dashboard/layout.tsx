@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, 'useEffect', useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useRouter } from 'next/navigation';
 import { auth, firestore } from '@/firebase/config';
