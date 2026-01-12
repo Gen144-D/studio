@@ -82,7 +82,7 @@ export function DashboardNav() {
             <SidebarMenuItem key={item.title}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Link href={item.href} legacyBehavior passHref>
+                  <Link href={item.href}>
                     <SidebarMenuButton
                       isActive={isActive}
                       className="w-full"
