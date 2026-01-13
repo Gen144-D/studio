@@ -5,7 +5,6 @@ service cloud.firestore {
 
     // Helper function to check if a user is an admin
     function isAdmin() {
-      // Check for the existence of the user document and the role property
       return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
@@ -17,35 +16,23 @@ service cloud.firestore {
 
     // --- Users Collection ---
     match /users/{userId} {
-      // Any authenticated user can create their own user document (e.g., on signup)
-      // Allow create if the user is creating their own document.
-      allow create: if request.auth.uid == userId;
+      // Admins can do anything.
+      allow read, write: if isAdmin();
       
-      // Users can read their own profile, and admins can read any profile
-      allow read: if isOwner(userId) || isAdmin();
+      // Non-admins can create their own user document on signup.
+      allow create: if isOwner(userId);
       
-      // Admins can query the entire users list
-      allow list: if isAdmin();
-      
-      // Users can only update their own profile. Admins can update any profile (e.g., to change a role).
-      allow update: if isOwner(userId) || isAdmin();
-      
-      // Users cannot delete their profiles. Only admins can delete user documents.
-      allow delete: if isAdmin();
+      // Non-admins can read and update their own profiles.
+      allow read, update: if isOwner(userId);
     }
 
     // --- Bikes Collection ---
     match /bikes/{bikeId} {
-      // Any authenticated user (including admins) can read bike information
-      allow read, list: if request.auth.uid != null;
+      // Any authenticated user can read bike information.
+      allow get, list: if request.auth.uid != null;
       
-      // Only admins can create, update, or delete bike documents
+      // Only admins can create, update, or delete bike documents.
       allow create, update, delete: if isAdmin();
-    }
-    
-    // Catch-all to prevent access to any other collections
-    match /{path=**} {
-      allow read, write: if false;
     }
   }
 }
