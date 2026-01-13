@@ -11,10 +11,11 @@ export type BikeStatus = 'available' | 'in-use' | 'maintenance' | 'low-battery' 
 
 export type Bike = {
   id: string;
+  docId?: string;
   station: string;
   battery: number;
   status: BikeStatus;
-  lastService: string;
+  lastService: string | Date | Timestamp;
   mileage: number;
 };
 
