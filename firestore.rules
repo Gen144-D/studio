@@ -23,6 +23,9 @@ service cloud.firestore {
       // Users can read their own profile, and admins can read any profile
       allow read: if isOwner(userId) || isAdmin();
       
+      // Admins can query the entire users list
+      allow list: if isAdmin();
+      
       // Users can only update their own profile. Admins can update any profile (e.g., to change a role).
       allow update: if isOwner(userId) || isAdmin();
       
@@ -33,7 +36,7 @@ service cloud.firestore {
     // --- Bikes Collection ---
     match /bikes/{bikeId} {
       // Any authenticated user (including admins) can read bike information
-      allow read: if request.auth.uid != null;
+      allow read, list: if request.auth.uid != null;
       
       // Only admins can create, update, or delete bike documents
       allow create, update, delete: if isAdmin();
