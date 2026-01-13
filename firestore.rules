@@ -5,7 +5,9 @@ service cloud.firestore {
 
     // Helper function to check if a user is an admin
     function isAdmin() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      // Check for the existence of the user document and the role property
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
     // Helper function to check if a user is the owner of a document
@@ -13,34 +15,28 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
 
-    // Admins can read and write anything
-    match /{document=**} {
-      allow read, write: if isAdmin();
-    }
-
-    // Users collection rules
+    // --- Users Collection ---
     match /users/{userId} {
       // Any authenticated user can create their own user document (e.g., on signup)
       allow create: if request.auth.uid != null;
-      // Users can read their own profile, admins can read any profile
+      
+      // Users can read their own profile, and admins can read any profile
       allow read: if isOwner(userId) || isAdmin();
-      // Users can only update their own profile
-      allow update: if isOwner(userId);
-      // Users cannot delete their profiles through the app
-      allow delete: if false;
+      
+      // Users can only update their own profile. Admins can update any profile (e.g., to change a role).
+      allow update: if isOwner(userId) || isAdmin();
+      
+      // Users cannot delete their profiles. Only admins can delete user documents.
+      allow delete: if isAdmin();
     }
 
-    // Bikes collection rules
+    // --- Bikes Collection ---
     match /bikes/{bikeId} {
-      // Any authenticated user can see the bikes
+      // Any authenticated user (including admins) can read bike information
       allow read: if request.auth.uid != null;
+      
       // Only admins can create, update, or delete bike documents
-      allow write: if isAdmin();
-    }
-    
-    // Default deny all other access
-    match /{path=**} {
-      allow read, write: if false;
+      allow create, update, delete: if isAdmin();
     }
   }
 }
