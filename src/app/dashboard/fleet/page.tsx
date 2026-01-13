@@ -1,9 +1,8 @@
 
 'use client';
 
-import { useState } from 'react';
-import { useCollection } from 'react-firebase-hooks/firestore';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useState, useEffect } from 'react';
+import { collection, addDoc, onSnapshot, serverTimestamp, query } from 'firebase/firestore';
 import { firestore } from '@/firebase/config';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -80,18 +79,38 @@ const bikeImage = PlaceHolderImages.find((img) => img.id === 'bike-1');
 export default function FleetPage() {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
-  const [bikesCollection, loading, error] = useCollection(
-    collection(firestore, 'bikes'),
-    {
-      snapshotListenOptions: { includeMetadataChanges: true },
-    }
-  );
+  const [bikes, setBikes] = useState<BikeType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
-  const bikes: BikeType[] = (bikesCollection?.docs.map(doc => ({
-    ...doc.data(),
-    docId: doc.id,
-    lastService: doc.data().lastService.toDate ? doc.data().lastService.toDate() : new Date(doc.data().lastService),
-  })) as BikeType[]) || [];
+  useEffect(() => {
+    const q = query(collection(firestore, 'bikes'));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const bikesData: BikeType[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        bikesData.push({
+          ...data,
+          docId: doc.id,
+          lastService: data.lastService?.toDate ? data.lastService.toDate() : new Date(data.lastService),
+        } as BikeType);
+      });
+      setBikes(bikesData);
+      setLoading(false);
+    }, (err) => {
+      console.error(err);
+      setError(err);
+      setLoading(false);
+      toast({
+        title: "Error fetching bikes",
+        description: err.message,
+        variant: 'destructive',
+      });
+    });
+
+    return () => unsubscribe();
+  }, [toast]);
+
 
   const form = useForm<z.infer<typeof bikeSchema>>({
     resolver: zodResolver(bikeSchema),
@@ -314,3 +333,5 @@ export default function FleetPage() {
     </Card>
   );
 }
+
+    

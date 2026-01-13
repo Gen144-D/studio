@@ -16,7 +16,7 @@ service cloud.firestore {
 
     // --- Users Collection ---
     match /users/{userId} {
-      // Admins can do anything.
+      // Admins can do anything to user documents
       allow read, write: if isAdmin();
       
       // Non-admins can create their own user document on signup.
@@ -25,6 +25,12 @@ service cloud.firestore {
       // Non-admins can read and update their own profiles.
       allow read, update: if isOwner(userId);
     }
+    
+    // Admins can query the entire users collection
+    match /users/{userId} {
+       allow list: if isAdmin();
+    }
+
 
     // --- Bikes Collection ---
     match /bikes/{bikeId} {
@@ -36,3 +42,5 @@ service cloud.firestore {
     }
   }
 }
+
+    
