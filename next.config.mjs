@@ -1,18 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    allowedDevOrigins: [
-      'https://*.cluster-aic6jbiihrhmyrqafasatvzbwe.cloudworkstations.dev',
-    ],
+    // This is the correct placement for allowedDevOrigins
+    allowedDevOrigins: ["https://*.cloudworkstations.dev"],
   },
   images: {
     remotePatterns: [
       {
         protocol: 'https',
         hostname: 'images.unsplash.com',
-        port: '',
-        pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+      }
     ],
   },
 };
