@@ -18,7 +18,8 @@ service cloud.firestore {
     // --- Users Collection ---
     match /users/{userId} {
       // Any authenticated user can create their own user document (e.g., on signup)
-      allow create: if request.auth.uid != null;
+      // Allow create if the user is creating their own document.
+      allow create: if request.auth.uid == userId;
       
       // Users can read their own profile, and admins can read any profile
       allow read: if isOwner(userId) || isAdmin();
@@ -40,6 +41,11 @@ service cloud.firestore {
       
       // Only admins can create, update, or delete bike documents
       allow create, update, delete: if isAdmin();
+    }
+    
+    // Catch-all to prevent access to any other collections
+    match /{path=**} {
+      allow read, write: if false;
     }
   }
 }
