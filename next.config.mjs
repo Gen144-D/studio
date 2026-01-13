@@ -1,9 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    // This allows the Next.js dev server to accept requests from any origin.
-    // This is required for the app to work in a cloud-based development environment.
-    allowedDevOrigins: ["**"],
+    allowedDevOrigins: [
+      'https://*.cluster-aic6jbiihrhmyrqafasatvzbwe.cloudworkstations.dev',
+    ],
+  },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        port: '',
+        pathname: '/**',
+      },
+    ],
   },
 };
 
